@@ -1,0 +1,76 @@
+Log Analyzer — Step 1 (Sequential)
+
+A minimal, sequential log analyzer. It reads logs.txt, counts occurrences of selected levels (e.g., ERR, WARN) and patterns (e.g., CALL GET /orders), and prints the results along with the total elapsed time.
+
+This is Step 1 of the exercise. No concurrency yet. The concurrency parameter is ignored at this stage.
+
+Project Structure
+.
+├─ README.md
+├─ logs.txt
+├─ main.go            // reads logs.txt, calls AnalyzeLogs, prints results + timing
+└─ analyze/
+   └─ analyze.go      // AnalyzeLogs implementation (sequential)
+
+Input (logs.txt)
+
+One entry per line. Example:
+
+2025-09-17T10:00:01Z [INFO] START request id=abc123 user=42
+2025-09-17T10:00:02Z [INFO] CALL GET /orders status=200 dur=123ms
+2025-09-17T10:00:03Z [WARN] slow dependency
+2025-09-17T10:00:04Z [ERR] db timeout
+2025-09-17T10:00:05Z [INFO] CALL GET /customers status=200
+
+
+Note: the line reader intentionally adds 0.5s latency per line to simulate I/O. With N lines, baseline runtime ≈ 0.5 * N seconds plus overhead.
+
+Public API
+// Step 1 (sequential): 'concurrency' is ignored.
+func AnalyzeLogs(lines []string, levels, patterns []string, concurrency int) (map[string]int, map[string]int, int, error)
+
+
+Returns:
+
+map[string]int — counts per level (e.g., ERR, WARN)
+
+map[string]int — counts per pattern (e.g., CALL GET /orders)
+
+int — total number of processed lines
+
+error — non-nil on failure
+
+Matching is simple substring matching (case-sensitive) at this step.
+
+Run
+go run .
+
+
+Expected output shape (exact keys/labels depend on your main.go):
+
+total_lines=<N>
+Levels:
+  ERR: <n>
+  WARN: <n>
+Patterns:
+  CALL GET /orders: <n>
+  CALL GET /customers: <n>
+Total time: <duration>
+
+What’s Implemented in Step 1
+
+Sequential processing: loop over lines, update counters.
+
+Simple strings.Contains matching.
+
+0.5s artificial latency per line in the file reader.
+
+Elapsed time printed with time.Since(start).
+
+Next Steps
+
+Step 2 — Concurrency: fan-out/fan-in with WaitGroup and a semaphore (buffered channel) to limit parallelism; make concurrency effective.
+
+Step 3 — Pipeline: staged design source → match → reduce with channels and orderly shutdown.
+
+(Optional Step 4) Worker pool + small comparative report (time, lines/s) across modes.
